@@ -1,0 +1,90 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repoyu checkout
+        uses: actions/checkout@v4
+
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Web build al
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy paketini hazirla
+        run: |
+          mkdir -p deploy-package
+          cp -R dist deploy-package/dist
+          cp -R deploy deploy-package/deploy
+          cp server.cjs deploy-package/server.cjs
+          cp package.json deploy-package/package.json
+
+      - name: Dosyalari rsync ile sunucuya
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT != '' && secrets.VPS_SSH_PORT || 22 }}
+          VPS_SYSTEMD_UNIT: ${{ secrets.VPS_SYSTEMD_UNIT != '' && secrets.VPS_SYSTEMD_UNIT || 'daldandala' }}
+        run: |
+          set -euo pipefail
+          test -n "${VPS_SSH_KEY}" || { echo "VPS_SSH_KEY secret bos"; exit 1; }
+          test -n "${VPS_HOST}" || { echo "VPS_HOST secret bos"; exit 1; }
+          test -n "${VPS_USER}" || { echo "VPS_USER secret bos"; exit 1; }
+          test -n "${VPS_APP_PATH}" || { echo "VPS_APP_PATH secret bos"; exit 1; }
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_deploy
+          chmod 600 ~/.ssh/vps_deploy
+          ssh-keyscan -p "$VPS_SSH_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          SSH_OPTS="-i $HOME/.ssh/vps_deploy -p $VPS_SSH_PORT -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ConnectionAttempts=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+
+          echo "SSH baglantisi kontrol ediliyor..."
+          ssh $SSH_OPTS "${VPS_USER}@${VPS_HOST}" "echo SSH baglantisi tamam && mkdir -p '${VPS_APP_PATH}'"
+
+          for attempt in 1 2 3; do
+            echo "Rsync denemesi: ${attempt}/3"
+            if rsync -avz --delete \
+              -e "ssh $SSH_OPTS" \
+              deploy-package/ "${VPS_USER}@${VPS_HOST}:${VPS_APP_PATH}/"; then
+              break
+            fi
+
+            if [ "$attempt" = "3" ]; then
+              echo "Rsync 3 denemeden sonra basarisiz oldu."
+              exit 1
+            fi
+
+            sleep $((attempt * 10))
+          done
+
+          ssh $SSH_OPTS "${VPS_USER}@${VPS_HOST}" "
+            UNIT='${VPS_SYSTEMD_UNIT}'
+            if ! sudo systemctl cat \"\${UNIT}.service\" >/dev/null 2>&1; then
+              echo \"HATA: \${UNIT}.service yok. Bir kez deploy/daldandala.service.example dosyasindan systemd servisi kurun.\"
+              echo \"Ornek:\"
+              echo \"  sudo cp ${VPS_APP_PATH}/deploy/daldandala.service.example /etc/systemd/system/\${UNIT}.service\"
+              echo \"  sudo nano /etc/systemd/system/\${UNIT}.service\"
+              echo \"  sudo systemctl daemon-reload && sudo systemctl enable --now \${UNIT}\"
+              exit 1
+            fi
+            sudo systemctl restart \"\${UNIT}\"
+          "
