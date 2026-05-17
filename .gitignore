@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.android-sdk/
+
+*.apk
+*.aab
+*.keystore
+*.jks
+
+android/.gradle/
+android/build/
+android/app/build/
+android/app/release/
+
+.DS_Store
+Thumbs.db
+*.log

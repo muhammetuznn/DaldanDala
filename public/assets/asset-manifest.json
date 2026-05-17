@@ -1,0 +1,26 @@
+{
+  "project": "Daldan Dala Premium Asset Pack",
+  "version": "1.0.0",
+  "format": "Game-ready asset pack with organized folders",
+  "folders": {
+    "characters": "Playable monkey character sheet",
+    "vines": "Vine variations sheet",
+    "obstacles": "Obstacle icons sheet",
+    "bananas": "Banana / collectible variants sheet",
+    "powerups": "Power-up icons sheet",
+    "ui": "Jungle themed UI elements sheet",
+    "backgrounds": "Vertical background scenes"
+  },
+  "files": [
+    "characters/monkey-characters-pack.png",
+    "vines/vine-types-pack.png",
+    "obstacles/obstacles-pack.png",
+    "bananas/banana-powerups-pack.png",
+    "powerups/powerup-icons-pack.png",
+    "ui/jungle-ui-elements-pack.png",
+    "backgrounds/jungle-day.png",
+    "backgrounds/jungle-night.png",
+    "backgrounds/temple-ruins.png",
+    "backgrounds/volcanic-jungle.png"
+  ]
+}
