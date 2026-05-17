@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/var/www/daldandala
+WorkingDirectory=/home/motorkurye/DaldanDala
 ExecStart=/usr/bin/node server.cjs
 Restart=always
 RestartSec=5

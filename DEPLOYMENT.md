@@ -9,7 +9,7 @@ Repo ayarlarinda `Settings > Secrets and variables > Actions` altina sunlari ekl
 - `VPS_SSH_KEY`: VPS'e baglanacak private SSH key
 - `VPS_HOST`: VPS IP veya domain
 - `VPS_USER`: SSH kullanicisi
-- `VPS_APP_PATH`: VPS'te uygulamanin duracagi klasor, ornek `/var/www/daldandala`
+- `VPS_APP_PATH`: VPS'te uygulamanin duracagi klasor. Bos birakirsan workflow `/home/$VPS_USER/DaldanDala` yolunu kullanir ve klasor yoksa olusturur.
 
 Opsiyonel:
 
@@ -18,10 +18,14 @@ Opsiyonel:
 
 ## VPS'te Bir Kerelik Servis Kurulumu
 
-Ilk deploy dosyalari VPS'e attiktan sonra servisi bir kez kur:
+Ilk deploy dosyalari VPS'e attiktan sonra servisi bir kez kur. MotoKurye yapisina gore varsayilan yol:
+
+```text
+/home/motorkurye/DaldanDala
+```
 
 ```bash
-sudo cp /var/www/daldandala/deploy/daldandala.service.example /etc/systemd/system/daldandala.service
+sudo cp /home/motorkurye/DaldanDala/deploy/daldandala.service.example /etc/systemd/system/daldandala.service
 sudo nano /etc/systemd/system/daldandala.service
 ```
 

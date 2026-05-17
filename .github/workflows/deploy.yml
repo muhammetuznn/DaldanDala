@@ -47,7 +47,10 @@ jobs:
           test -n "${VPS_SSH_KEY}" || { echo "VPS_SSH_KEY secret bos"; exit 1; }
           test -n "${VPS_HOST}" || { echo "VPS_HOST secret bos"; exit 1; }
           test -n "${VPS_USER}" || { echo "VPS_USER secret bos"; exit 1; }
-          test -n "${VPS_APP_PATH}" || { echo "VPS_APP_PATH secret bos"; exit 1; }
+          if [ -z "${VPS_APP_PATH}" ]; then
+            VPS_APP_PATH="/home/${VPS_USER}/DaldanDala"
+            echo "VPS_APP_PATH secret bos; varsayilan yol kullaniliyor: ${VPS_APP_PATH}"
+          fi
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
